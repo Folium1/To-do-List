@@ -1,10 +1,6 @@
 package controller
 
 import (
-	"errors"
-	"fmt"
-	"net/http"
-
 	"todo/db"
 )
 
@@ -17,10 +13,10 @@ func New(db db.TaskService) TaskController {
 }
 
 type TaskController interface {
-	Create(params *http.Request) error
+	Create(newTask db.TaskCreateDTO) error
 	Tasks() ([]db.Task, error)
 	DeleteTask(taskId string) error
-	IsDone(taskId string) error
+	ChangeData(newTaskData db.Task) error
 }
 
 func (c *taskController) Tasks() ([]db.Task, error) {
@@ -31,19 +27,7 @@ func (c *taskController) Tasks() ([]db.Task, error) {
 	return tasks, nil
 }
 
-func (c *taskController) Create(params *http.Request) error {
-	newTask := db.TaskCreateDTO{}
-	newTask.Description = params.PostFormValue("description")
-	if newTask.Description == "" {
-		err := fmt.Sprintf("wrong description: %v", newTask.Description)
-		return errors.New(err)
-	}
-	deadline := params.PostFormValue("date")
-	if deadline == "" {
-		err := fmt.Sprintf("wrong deadline: %v", deadline)
-		return errors.New(err)
-	}
-	newTask.Deadline = deadline
+func (c *taskController) Create(newTask db.TaskCreateDTO) error {
 	err := c.t.Create(newTask)
 	if err != nil {
 		return err
@@ -55,6 +39,30 @@ func (c *taskController) DeleteTask(taskId string) error {
 	return c.t.DeleteTask(taskId)
 }
 
-func (c *taskController) IsDone(taskId string) error {
-	return c.t.IsDone(taskId)
+func (c *taskController) ChangeData(newTaskData db.Task) error {
+	task, err := c.t.GetTask(newTaskData.Id)
+	if err != nil {
+		return err
+	}
+	if task.Deadline != newTaskData.Deadline {
+		task.Deadline = newTaskData.Deadline
+	}
+	if task.Description != newTaskData.Description {
+		task.Description = newTaskData.Description
+	}
+	if task.Done != newTaskData.Done {
+		task.Done = newTaskData.Done
+	}
+	if task.Done {
+		err := c.t.DeleteTask(newTaskData.Id)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	err = c.t.SaveTask(task)
+	if err != nil {
+		return err
+	}
+	return nil
 }
