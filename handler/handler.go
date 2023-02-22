@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"text/template"
 
@@ -30,19 +32,54 @@ func main(w http.ResponseWriter, r *http.Request) {
 }
 
 func createTask(w http.ResponseWriter, r *http.Request) {
-	err := taskController.Create(r)
+	var newTask db.TaskCreateDTO
+	newTask.Description = r.PostFormValue("description")
+	if newTask.Description == "" {
+		err := fmt.Sprintf("wrong description: %v", newTask.Description)
+		http.Error(w, err, http.StatusBadRequest)
+	}
+	deadline := r.PostFormValue("date")
+	if deadline == "" {
+		err := fmt.Sprintf("wrong deadline: %v", deadline)
+		http.Error(w, err, http.StatusBadRequest)
+	}
+	newTask.Deadline = deadline
+	err := taskController.Create(newTask)
 	if err != nil {
-		http.Error(w, err.Error(), 400)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 	http.Redirect(w, r, "/", http.StatusMovedPermanently)
 }
 
 func updateData(w http.ResponseWriter, r *http.Request) {
-	err := taskController.ChangeData(r)
-	if err != nil {
-		http.Error(w, err.Error(), 400)
+	if r.Method == "POST" {
+		method := r.FormValue("_method")
+		if method == "PATCH" {
+
+		}
 	}
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	id := r.PostFormValue("id")
+	if id == "" {
+		err := errors.New("wrond task id handler")
+		http.Error(w, err.Error(), http.StatusNotFound)
+	}
+	var newTaskData db.Task
+	newTaskData.Id = id
+	newTaskData.Deadline = r.FormValue("deadline")
+	newTaskData.Description = r.FormValue("description")
+	if r.FormValue("done") == "on" {
+		newTaskData.Done = true
+	} else {
+		newTaskData.Done = false
+	}
+
+	taskController.ChangeData(newTaskData)
+	fmt.Println(newTaskData)
+	err := taskController.ChangeData(newTaskData)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func InitServer() {
@@ -54,7 +91,7 @@ func InitServer() {
 
 	router.HandleFunc("/", main).Methods("GET")
 	router.HandleFunc("/create/", createTask).Methods("POST")
-	router.HandleFunc("/update/{taskId}", updateData).Methods("PATCH")
+	router.HandleFunc("/update/{taskId}", updateData).Methods("PATCH", "POST")
 
 	http.ListenAndServe(":8080", router)
 }
