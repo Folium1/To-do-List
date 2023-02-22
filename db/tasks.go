@@ -28,6 +28,20 @@ func dbConnect() (*sql.DB, error) {
 	return db, nil
 }
 
+func DbTableInit() error {
+	db, err := dbConnect()
+	if err != nil {
+		log.Printf("couldn't connect to db, err: %v", err)
+		return err
+	}
+	_, err = db.Query("CREATE TABLE IF NOT EXISTS tasks (task_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,description VARCHAR(50),deadline DATETIME,is_done TINYINT(1));")
+	if err != nil {
+		log.Printf("Couldn't create table")
+		return err
+	}
+	return nil
+}
+
 type TaskService interface {
 	Create(newTask TaskCreateDTO) error
 	Tasks() ([]Task, error)
@@ -130,7 +144,6 @@ func (t *Task) SaveTask(task Task) error {
 	var q string
 	if task.Done {
 		q = fmt.Sprintf("UPDATE tasks SET is_done = 1, description= '%v', deadline='%v' WHERE task_id = '%v';", task.Description, task.Deadline, task.Id)
-
 	} else {
 		q = fmt.Sprintf("UPDATE tasks SET is_done = 0, description= '%v', deadline='%v' WHERE task_id = '%v';", task.Description, task.Deadline, task.Id)
 	}
