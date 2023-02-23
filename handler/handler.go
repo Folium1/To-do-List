@@ -22,7 +22,7 @@ var (
 func main(w http.ResponseWriter, r *http.Request) {
 	tasks, err := taskController.Tasks()
 	if err != nil {
-		http.Error(w, err.Error(), 404)
+		http.Error(w, err.Error(), http.StatusNotFound)
 	}
 
 	err = templ.ExecuteTemplate(w, "index.html", tasks)
@@ -63,21 +63,27 @@ func updateData(w http.ResponseWriter, r *http.Request) {
 		err := errors.New("wrond task id handler")
 		http.Error(w, err.Error(), http.StatusNotFound)
 	}
-	var newTaskData db.Task
+	var newTaskData db.UpdateTaskDTO
 	newTaskData.Id = id
 	newTaskData.Deadline = r.FormValue("deadline")
 	newTaskData.Description = r.FormValue("description")
-	if r.FormValue("done") == "on" {
-		newTaskData.Done = true
-	} else {
-		newTaskData.Done = false
-	}
 
 	taskController.ChangeData(newTaskData)
 	fmt.Println(newTaskData)
 	err := taskController.ChangeData(newTaskData)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func deleteTask(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+	err := taskController.DeleteTask(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
@@ -91,7 +97,7 @@ func InitServer() {
 
 	router.HandleFunc("/", main).Methods("GET")
 	router.HandleFunc("/create/", createTask).Methods("POST")
-	router.HandleFunc("/update/{taskId}", updateData).Methods("PATCH", "POST")
-
+	router.HandleFunc("/update/{taskId}", updateData).Methods("POST")
+	router.HandleFunc("/delete/{id}/", deleteTask).Methods("GET")
 	http.ListenAndServe(":8080", router)
 }
