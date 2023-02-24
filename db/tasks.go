@@ -10,12 +10,14 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// Returns a pointer to initiated new Task struct.
 func NewService() TaskService {
 	return &Task{}
 }
 
-// Making connection to db
+// dbConnect establishes a connection to the database.
 func dbConnect() (*sql.DB, error) {
+	// Load environment variables from .env file.
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
@@ -28,6 +30,7 @@ func dbConnect() (*sql.DB, error) {
 	return db, nil
 }
 
+// DbTableInit creates the tasks table in the database if it does not already exist.
 func DbTableInit() error {
 	db, err := dbConnect()
 	if err != nil {
@@ -50,7 +53,7 @@ type TaskService interface {
 	SaveTask(task Task) error
 }
 
-// Get all tasks
+// Returns a slice of all tasks
 func (t *Task) Tasks() ([]Task, error) {
 	db, err := dbConnect()
 	if err != nil {
@@ -66,7 +69,7 @@ func (t *Task) Tasks() ([]Task, error) {
 	}
 	var allTasks []Task
 	var oneTask Task
-
+	// Itarate through the query
 	for query.Next() {
 		err := query.Scan(&oneTask.Id, &oneTask.Description, &oneTask.Deadline, &oneTask.Done)
 		if err != nil {
@@ -79,7 +82,7 @@ func (t *Task) Tasks() ([]Task, error) {
 	return allTasks, nil
 }
 
-// Create a new task
+// Adds a new task to the database.
 func (t *Task) Create(newTask TaskCreateDTO) error {
 	db, err := dbConnect()
 	if err != nil {
@@ -94,7 +97,7 @@ func (t *Task) Create(newTask TaskCreateDTO) error {
 	return nil
 }
 
-// DeleteTask takes task by it's id
+// Removes a task from the database.
 func (t *Task) DeleteTask(taskId string) error {
 	db, err := dbConnect()
 	if err != nil {
@@ -109,7 +112,7 @@ func (t *Task) DeleteTask(taskId string) error {
 	return nil
 }
 
-// Returns task by id or error
+// Returns task by it's id.
 func (t *Task) GetTask(id string) (Task, error) {
 	db, err := dbConnect()
 	if err != nil {
@@ -121,6 +124,7 @@ func (t *Task) GetTask(id string) (Task, error) {
 	}
 	var task Task
 	task.Id = id
+	// Itarate through the query
 	for query.Next() {
 		err := query.Scan(&task.Description, &task.Deadline, &task.Done)
 		if err != nil {
@@ -128,25 +132,19 @@ func (t *Task) GetTask(id string) (Task, error) {
 		}
 	}
 	if task.Id == "" {
-		panic("wrong task id db")
+		panic("wrong task id")
 	}
 	return task, nil
 }
 
-// Changes task data by id
+// Saves updated task's data.
 func (t *Task) SaveTask(task Task) error {
 	db, err := dbConnect()
 	if err != nil {
 		return err
 	}
-
 	defer db.Close()
-	var q string
-	if task.Done {
-		q = fmt.Sprintf("UPDATE tasks SET is_done = 1, description= '%v', deadline='%v' WHERE task_id = '%v';", task.Description, task.Deadline, task.Id)
-	} else {
-		q = fmt.Sprintf("UPDATE tasks SET is_done = 0, description= '%v', deadline='%v' WHERE task_id = '%v';", task.Description, task.Deadline, task.Id)
-	}
+	q := fmt.Sprintf("UPDATE tasks SET is_done = 0, description= '%v', deadline='%v' WHERE task_id = '%v';", task.Description, task.Deadline, task.Id)
 	_, err = db.Query(q)
 	if err != nil {
 		return err
