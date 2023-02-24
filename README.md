@@ -1,5 +1,4 @@
 # Todo-App
-____
 It is a simple todo list written in **golang** using local __**mysql**__ database, and __**html**__,__**css**__ and __**bootstrap**__ for front end.
 
 ## Application Requirement:
@@ -15,4 +14,4 @@ It is a simple todo list written in **golang** using local __**mysql**__ databas
 6.Open [server](http://localhost:8080/todo)
 
 ## Sample
-
+![todo sample](https://drive.google.com/file/d/1uxyeGIa6nAujvSONWluTcaH3fRU70oeR/view?usp=share_link)
