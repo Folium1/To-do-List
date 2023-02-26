@@ -46,7 +46,7 @@ func DbTableInit() error {
 }
 
 type TaskService interface {
-	Create(newTask TaskCreateDTO) error
+	Create(newTask Task) error
 	Tasks() ([]Task, error)
 	DeleteTask(taskId string) error
 	GetTask(id string) (Task, error)
@@ -83,7 +83,7 @@ func (t *Task) Tasks() ([]Task, error) {
 }
 
 // Adds a new task to the database.
-func (t *Task) Create(newTask TaskCreateDTO) error {
+func (t *Task) Create(newTask Task) error {
 	db, err := dbConnect()
 	if err != nil {
 		log.Print(err)

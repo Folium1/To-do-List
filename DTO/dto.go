@@ -1,4 +1,5 @@
-package db
+package dto
+
 
 type TaskCreateDTO struct {
 	Description string `json:"description"`

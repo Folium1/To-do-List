@@ -10,6 +10,7 @@ import (
 
 	"todo/controller"
 	"todo/db"
+	dto "todo/DTO"
 )
 
 var (
@@ -42,7 +43,7 @@ func redirectToMain(w http.ResponseWriter, r *http.Request) {
 func createTask(w http.ResponseWriter, r *http.Request) {
 	// Retrieve the task data from the HTTP request.
 	if r.Method == "POST" {
-		var newTask db.TaskCreateDTO
+		var newTask dto.TaskCreateDTO
 		newTask.Description = r.PostFormValue("description")
 		if newTask.Description == "" {
 			err := fmt.Sprintf("wrong description: %v", newTask.Description)
@@ -75,10 +76,10 @@ func updateData(w http.ResponseWriter, r *http.Request) {
 			// Retrieve the task ID and updated data from the HTTP request.
 			id := r.PostFormValue("id")
 			if id == "" {
-				err := errors.New("wrond task id handler")
+				err := errors.New("wrond task id")
 				http.Error(w, err.Error(), http.StatusNotFound)
 			}
-			var newTaskData db.UpdateTaskDTO
+			var newTaskData dto.UpdateTaskDTO
 			newTaskData.Id = id
 			newTaskData.Deadline = r.FormValue("deadline")
 			newTaskData.Description = r.FormValue("description")

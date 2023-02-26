@@ -2,7 +2,10 @@ package controller
 
 import (
 	"errors"
+	dto "todo/DTO"
 	"todo/db"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 type taskController struct {
@@ -17,15 +20,20 @@ func New(db db.TaskService) TaskController {
 
 // TaskController is an interface that defines methods to manage tasks.
 type TaskController interface {
-	Create(newTask db.TaskCreateDTO) error
-	Tasks() ([]db.Task, error)
+	Create(newTask dto.TaskCreateDTO) error
+	Tasks() ([]dto.TasksDTO, error)
 	DeleteTask(taskId string) error
-	ChangeData(newTaskData db.UpdateTaskDTO) error
+	ChangeData(newTaskData dto.UpdateTaskDTO) error
 }
 
 // Adds a new task to the database.
-func (c *taskController) Create(newTask db.TaskCreateDTO) error {
-	err := c.t.Create(newTask)
+func (c *taskController) Create(newTaskDTO dto.TaskCreateDTO) error {
+	var newTask db.Task
+	err := mapstructure.Decode(newTaskDTO, &newTask)
+	if err != nil {
+		return err
+	}
+	err = c.t.Create(newTask)
 	if err != nil {
 		return err
 	}
@@ -33,12 +41,18 @@ func (c *taskController) Create(newTask db.TaskCreateDTO) error {
 }
 
 // Retrieves a list of tasks from the database.
-func (c *taskController) Tasks() ([]db.Task, error) {
+func (c *taskController) Tasks() ([]dto.TasksDTO, error) {
 	tasks, err := c.t.Tasks()
 	if err != nil {
-		return []db.Task{}, err
+		return nil, err
 	}
-	return tasks, nil
+	tasksDTO := make([]dto.TasksDTO, len(tasks), len(tasks))
+	for _, task := range tasks {
+		var taskDTO dto.TasksDTO
+		err = mapstructure.Decode(task, &taskDTO)
+		tasksDTO = append(tasksDTO, taskDTO)
+	}
+	return tasksDTO, nil
 }
 
 // Deletes a task with the given Id from the database.
@@ -47,7 +61,7 @@ func (c *taskController) DeleteTask(taskId string) error {
 }
 
 // Updates a task with new data in the database.
-func (c *taskController) ChangeData(newTaskData db.UpdateTaskDTO) error {
+func (c *taskController) ChangeData(newTaskData dto.UpdateTaskDTO) error {
 	task, err := c.t.GetTask(newTaskData.Id) // Retrieve the task from the database using the Id.
 	if err != nil {
 		return err
