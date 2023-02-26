@@ -2,8 +2,9 @@ package controller
 
 import (
 	"errors"
-	dto "todo/DTO"
+
 	"todo/db"
+	dto "todo/dto"
 
 	"github.com/mitchellh/mapstructure"
 )

@@ -10,7 +10,7 @@ import (
 
 	"todo/controller"
 	"todo/db"
-	dto "todo/DTO"
+	dto "todo/dto"
 )
 
 var (
