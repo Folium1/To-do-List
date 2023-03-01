@@ -1,12 +1,11 @@
 package controller
 
 import (
+	"encoding/json"
 	"errors"
 
 	"todo/db"
 	dto "todo/dto"
-
-	"github.com/mitchellh/mapstructure"
 )
 
 type taskController struct {
@@ -30,7 +29,11 @@ type TaskController interface {
 // Adds a new task to the database.
 func (c *taskController) Create(newTaskDTO dto.TaskCreateDTO) error {
 	var newTask db.Task
-	err := mapstructure.Decode(newTaskDTO, &newTask)
+	data, err := json.Marshal(newTaskDTO)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(data, &newTask)
 	if err != nil {
 		return err
 	}
@@ -49,11 +52,16 @@ func (c *taskController) Tasks() ([]dto.TasksDTO, error) {
 	}
 	tasksDTO := make([]dto.TasksDTO, len(tasks), len(tasks))
 	for _, task := range tasks {
+		// Parse data from db.Task struct into dto.TasksDTO struct
 		var taskDTO dto.TasksDTO
-		err = mapstructure.Decode(task, &taskDTO)
+		data, err := json.Marshal(task)
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(data, &taskDTO)
 		tasksDTO = append(tasksDTO, taskDTO)
 	}
-	return tasksDTO, nil
+	return tasksDTO[1:], nil
 }
 
 // Deletes a task with the given Id from the database.
