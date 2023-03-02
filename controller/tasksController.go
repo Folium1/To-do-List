@@ -50,7 +50,7 @@ func (c *taskController) Tasks() ([]dto.TasksDTO, error) {
 	if err != nil {
 		return nil, err
 	}
-	tasksDTO := make([]dto.TasksDTO, len(tasks), len(tasks))
+	tasksDTO := make([]dto.TasksDTO, 0, len(tasks))
 	for _, task := range tasks {
 		// Parse data from db.Task struct into dto.TasksDTO struct
 		var taskDTO dto.TasksDTO
@@ -61,7 +61,7 @@ func (c *taskController) Tasks() ([]dto.TasksDTO, error) {
 		err = json.Unmarshal(data, &taskDTO)
 		tasksDTO = append(tasksDTO, taskDTO)
 	}
-	return tasksDTO[1:], nil
+	return tasksDTO, nil
 }
 
 // Deletes a task with the given Id from the database.
