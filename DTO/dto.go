@@ -17,3 +17,9 @@ type UpdateTaskDTO struct {
 	Description string `json:"description"`
 	Deadline    string `json:"deadline"`
 }
+
+type UserDTO struct {
+	Name     string `json:"name"`
+	Mail     string `json:"mail"`
+	Password string `json:"pass"`
+}
