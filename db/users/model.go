@@ -2,7 +2,7 @@ package users
 
 
 type User struct {
-	Id string `json:"id"`
+	Id int `json:"user_id"`
 	Name string `json:"name"`
 	Mail string `json:"mail"`
 	Password string `json:"pass"`
