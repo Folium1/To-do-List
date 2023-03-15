@@ -15,24 +15,9 @@ var (
 	signKey = os.Getenv("SigningKey")
 )
 
-// AuthMiddleWare
-func AuthMiddleWare(next func() http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// retrieve token from request
-		token, err := GetToken(r)
-		if err != nil || token == "" {
-			// redirecting to login page
-			r.Method = "GET"
-			http.Redirect(w, r, "/", http.StatusFound)
-			return
-		}
-		next().ServeHTTP(w, r)
-	})
-}
-
-// Generating token and send it to user in cookies
+// Generating token and send it to user's cookies
 func AuthUser(w http.ResponseWriter, r *http.Request, userId int) error {
-	token, err := GenerateToken(userId)
+	token, err := generateToken(strconv.Itoa(userId))
 	if err != nil {
 		return err
 	}
@@ -45,10 +30,10 @@ func AuthUser(w http.ResponseWriter, r *http.Request, userId int) error {
 	return nil
 }
 
-// GenerateToken generates jwt token
-func GenerateToken(userId int) (string, error) {
+// generateToken generates jwt token
+func generateToken(userId string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"Authorization": strconv.Itoa(userId),
+		"Authorization": userId,
 		"exp":           time.Now().Add(15 * time.Minute).Unix(),
 	})
 	tokenStr, err := token.SignedString([]byte(signKey))
@@ -61,8 +46,8 @@ func GenerateToken(userId int) (string, error) {
 	return tokenStr, nil
 }
 
-// ValidateToken validating token and returning user's id or error
-func ValidateToken(tokenString string) (*jwt.Token, error) {
+// validateToken validating token and returning jwt token or error
+func validateToken(tokenString string) (*jwt.Token, error) {
 	// Parse the token
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		// Validate the token's signing method
@@ -78,8 +63,8 @@ func ValidateToken(tokenString string) (*jwt.Token, error) {
 	return token, nil
 }
 
-// GetUserId extracts userId from token
-func GetUserId(token *jwt.Token) (string, error) {
+// getUserId extracts userId from token
+func getUserId(token *jwt.Token) (string, error) {
 	// Extract the userID field from the token's payload
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
@@ -92,8 +77,8 @@ func GetUserId(token *jwt.Token) (string, error) {
 	return userId, nil
 }
 
-// GetToken gets token from cookies
-func GetToken(r *http.Request) (string, error) {
+// getToken gets token from cookies
+func getToken(r *http.Request) (string, error) {
 	token, err := r.Cookie("Authorization")
 	if err != nil {
 		return "", err
@@ -107,12 +92,29 @@ func GetToken(r *http.Request) (string, error) {
 	return splitToken[1], nil
 }
 
-// IsAuthenticated checks if user has token,if token is present - redirects to /chat/ page else
-// redirects to login page
-func IsAuthenticated(w http.ResponseWriter, r *http.Request) {
-	token, err := GetToken(r)
+// IsAuthenticated checks if user has token,if token is present - redirects to main page
+func IsAuthenticated(w http.ResponseWriter, r *http.Request) bool {
+	token, err := getToken(r)
 	if err != nil || token == "" {
-		return
+		return false
 	}
-	http.Redirect(w, r, "/chat/", http.StatusFound)
+	return true
+}
+
+// GetUserIdFromCookies return's user's id from cookies
+func GetUserIdFromCookies(r *http.Request) (string, error) {
+	stringToken, err := getToken(r)
+	if err != nil {
+		return "", err
+	}
+	jwtToken, err := validateToken(stringToken)
+	if err != nil {
+		return "", err
+	}
+	userId, err := getUserId(jwtToken)
+	if err != nil {
+		return "", err
+	}
+	fmt.Println(userId)
+	return userId, nil
 }
