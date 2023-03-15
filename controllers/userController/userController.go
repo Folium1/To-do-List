@@ -12,7 +12,7 @@ type UserController struct {
 }
 
 type ControllerService interface {
-	Create(newUser dto.UserDTO) (string, error)
+	Create(newUser dto.UserDTO) (int, error)
 	GetUser(user dto.LoginUserDTO) (dto.LoginUserDTO, error)
 }
 
@@ -20,21 +20,22 @@ func New(userService db.Service) ControllerService {
 	return &UserController{userService}
 }
 
-func (u *UserController) Create(newUser dto.UserDTO) (string, error) {
+func (u *UserController) Create(newUser dto.UserDTO) (int, error) {
 	var dbUser db.User
 	err := parser.UsersDTOtoDB(newUser, &dbUser)
 	if err != nil {
 		log.Printf("Coudn't parse from dto to db data,err: %v", err)
-		return "", err
+		return 0, err
 	}
 	userId, err := u.db.CreateUser(dbUser)
 	if err != nil {
 		log.Printf("Couldn't create user, err: %v", err)
-		return "", err
+		return 0, err
 	}
 	return userId, nil
 }
 
+// GetUser returns user data
 func (u *UserController) GetUser(user dto.LoginUserDTO) (dto.LoginUserDTO, error) {
 	var dbUser db.User
 	err := parser.UsersDTOtoDB(user, &dbUser)

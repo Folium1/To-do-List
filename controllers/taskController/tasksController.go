@@ -58,7 +58,7 @@ func (c *taskController) Tasks(userId string) ([]dto.TasksDTO, error) {
 	return tasksDTO, nil
 }
 
-// Deletes a task with the given Id from the database.
+// DeleteTask delets a task with the given Id from the database.
 func (c *taskController) DeleteTask(taskId string) error {
 	return c.t.DeleteTask(taskId)
 }
